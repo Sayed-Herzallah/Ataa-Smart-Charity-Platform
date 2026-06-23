@@ -227,27 +227,42 @@ function renderDonationsPage() {
                 `;
             }
 
-            // Image extraction
-            let imageHtml = "";
-            let imageSrc = "";
-            if (item.images && item.images.length > 0) {
-                imageSrc = item.images[0];
-            } else if (item.image) {
-                imageSrc = item.image;
-            } else if (item.imageUrl) {
+            // Image extraction (Handles mongoose schema: imageUrl: [ { secure_url: "..." } ])
+        let imageHtml = "";
+        let imageSrc = "";
+        
+        if (item.imageUrl && item.imageUrl.length > 0) {
+            const first = item.imageUrl[0];
+            if (first && typeof first === 'object' && first.secure_url) {
+                imageSrc = first.secure_url;
+            } else if (typeof first === 'string') {
+                imageSrc = first;
+            } else if (typeof item.imageUrl === 'string') {
                 imageSrc = item.imageUrl;
             }
-
-            if (imageSrc) {
-                if (imageSrc.startsWith('/')) {
-                    imageSrc = BASE_URL + imageSrc;
-                }
-                imageHtml = `
-                    <div class="donation-card-img-wrap" style="height: 180px; overflow: hidden; border-radius: 12px; margin-bottom: 16px; border: 1px solid #e5e7eb;">
-                        <img src="${imageSrc}" alt="صورة التبرع" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'">
-                    </div>
-                `;
+        } else if (item.images && item.images.length > 0) {
+            const first = item.images[0];
+            if (first && typeof first === 'object' && (first.secure_url || first.url)) {
+                imageSrc = first.secure_url || first.url;
+            } else if (typeof first === 'string') {
+                imageSrc = first;
             }
+        } else if (typeof item.image === 'string') {
+            imageSrc = item.image;
+        } else if (item.image && typeof item.image === 'object' && item.image.secure_url) {
+            imageSrc = item.image.secure_url;
+        }
+
+        if (imageSrc && typeof imageSrc === 'string') {
+            if (imageSrc.startsWith('/')) {
+                imageSrc = BASE_URL + imageSrc;
+            }
+            imageHtml = `
+                <div class="donation-card-img-wrap" style="height: 180px; overflow: hidden; border-radius: 12px; margin-bottom: 16px; border: 1px solid #e5e7eb;">
+                    <img src="${imageSrc}" alt="صورة التبرع" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'">
+                </div>
+            `;
+        }    
 
             // Format Date
             let dateStr = "";
