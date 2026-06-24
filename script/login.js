@@ -815,10 +815,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const token =
                         data.tokens?.accessToken;
+                    let payload = null;
 
                     if (token) {
 
-                        const payload =
+                        payload =
                             JSON.parse(
                                 atob(
                                     token.split('.')[1]

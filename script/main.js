@@ -173,7 +173,163 @@ window.alert = function(msg) {
     }
 };
 
+// Custom Confirm Card system replacing standard confirm()
+function showConfirmCard(message, onConfirm, onCancel = null) {
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.backgroundColor = "rgba(27, 75, 90, 0.4)";
+    overlay.style.backdropFilter = "blur(6px)";
+    overlay.style.display = "flex";
+    overlay.style.justifyContent = "center";
+    overlay.style.alignItems = "center";
+    overlay.style.zIndex = "100000";
+    overlay.style.opacity = "0";
+    overlay.style.transition = "opacity 0.25s ease";
+    overlay.style.fontFamily = "'Tajawal', sans-serif";
+    overlay.style.direction = "rtl";
+
+    const card = document.createElement("div");
+    card.style.background = "#ffffff";
+    card.style.borderRadius = "20px";
+    card.style.padding = "25px 25px";
+    card.style.boxShadow = "0 15px 35px rgba(0, 0, 0, 0.12)";
+    card.style.textAlign = "center";
+    card.style.maxWidth = "380px";
+    card.style.width = "90%";
+    card.style.transform = "scale(0.9)";
+    card.style.transition = "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)";
+
+    card.innerHTML = `
+        <div style="width: 60px; height: 60px; background: rgba(27, 75, 90, 0.08); color: #1b4b5a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; font-size: 28px;">
+            <i class="fa-solid fa-circle-question"></i>
+        </div>
+        <h5 style="font-weight: 700; color: #1b4b5a; margin-bottom: 12px; font-size: 16px;">تأكيد الإجراء</h5>
+        <p style="color: #64748b; font-size: 13.5px; margin: 0 0 20px 0; line-height: 1.5;">${message}</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btn-confirm-yes" style="flex: 1; padding: 10px 16px; background-color: #dc3545; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: background-color 0.2s;">نعم، موافق</button>
+            <button id="btn-confirm-no" style="flex: 1; padding: 10px 16px; background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 10px; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: background-color 0.2s;">إلغاء</button>
+        </div>
+    `;
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    setTimeout(() => {
+        overlay.style.opacity = "1";
+        card.style.transform = "scale(1)";
+    }, 10);
+
+    const close = () => {
+        overlay.style.opacity = "0";
+        card.style.transform = "scale(0.9)";
+        setTimeout(() => overlay.remove(), 250);
+    };
+
+    card.querySelector("#btn-confirm-yes").onclick = () => {
+        close();
+        if (onConfirm) onConfirm();
+    };
+
+    card.querySelector("#btn-confirm-no").onclick = () => {
+        close();
+        if (onCancel) onCancel();
+    };
+}
+
+// Custom Prompt Card system replacing standard prompt()
+function showPromptCard(message, onConfirm, placeholder = "", onCancel = null) {
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.backgroundColor = "rgba(27, 75, 90, 0.4)";
+    overlay.style.backdropFilter = "blur(6px)";
+    overlay.style.display = "flex";
+    overlay.style.justifyContent = "center";
+    overlay.style.alignItems = "center";
+    overlay.style.zIndex = "100000";
+    overlay.style.opacity = "0";
+    overlay.style.transition = "opacity 0.25s ease";
+    overlay.style.fontFamily = "'Tajawal', sans-serif";
+    overlay.style.direction = "rtl";
+
+    const card = document.createElement("div");
+    card.style.background = "#ffffff";
+    card.style.borderRadius = "20px";
+    card.style.padding = "25px 25px";
+    card.style.boxShadow = "0 15px 35px rgba(0, 0, 0, 0.12)";
+    card.style.textAlign = "center";
+    card.style.maxWidth = "380px";
+    card.style.width = "90%";
+    card.style.transform = "scale(0.9)";
+    card.style.transition = "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)";
+
+    card.innerHTML = `
+        <div style="width: 60px; height: 60px; background: rgba(27, 75, 90, 0.08); color: #1b4b5a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; font-size: 28px;">
+            <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+        <h5 style="font-weight: 700; color: #1b4b5a; margin-bottom: 12px; font-size: 16px;">إدخال بيانات</h5>
+        <p style="color: #64748b; font-size: 13.5px; margin: 0 0 15px 0; line-height: 1.5;">${message}</p>
+        <div style="margin-bottom: 20px;">
+            <input type="text" id="prompt-input" placeholder="${placeholder}" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.2s;" />
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btn-prompt-submit" style="flex: 1; padding: 10px 16px; background-color: #1b4b5a; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: background-color 0.2s;">إرسال</button>
+            <button id="btn-prompt-cancel" style="flex: 1; padding: 10px 16px; background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 10px; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: background-color 0.2s;">إلغاء</button>
+        </div>
+    `;
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    const input = card.querySelector("#prompt-input");
+    setTimeout(() => {
+        overlay.style.opacity = "1";
+        card.style.transform = "scale(1)";
+        input.focus();
+    }, 10);
+
+    // Style input focus
+    input.addEventListener("focus", () => input.style.borderColor = "#1b4b5a");
+    input.addEventListener("blur", () => input.style.borderColor = "#e2e8f0");
+
+    const close = () => {
+        overlay.style.opacity = "0";
+        card.style.transform = "scale(0.9)";
+        setTimeout(() => overlay.remove(), 250);
+    };
+
+    card.querySelector("#btn-prompt-submit").onclick = () => {
+        const val = input.value.trim();
+        if (val === "") {
+            input.style.borderColor = "#ef4444";
+            return;
+        }
+        close();
+        if (onConfirm) onConfirm(val);
+    };
+
+    card.querySelector("#btn-prompt-cancel").onclick = () => {
+        close();
+        if (onCancel) onCancel();
+    };
+
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+            card.querySelector("#btn-prompt-submit").click();
+        }
+    });
+}
+
 window.showToast = showToast;
+window.showConfirmCard = showConfirmCard;
+window.showPromptCard = showPromptCard;
 
 window.addEventListener("scroll", () => {
   const navbar = document.getElementById("navbar");
