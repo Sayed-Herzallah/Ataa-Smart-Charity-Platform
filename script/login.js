@@ -814,51 +814,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log(data);
 
                     const token =
-                        data.token || 
-                        data.accessToken || 
-                        data.tokens?.accessToken || 
-                        data.data?.token || 
-                        data.data?.accessToken;
-                    let payload = null;
+                        data.tokens?.accessToken;
 
                     if (token) {
-                        try {
-                            payload =
-                                JSON.parse(
-                                    atob(
-                                        token.split('.')[1]
-                                    )
-                                );
 
-                            console.log(
-                                'TOKEN PAYLOAD:',
-                                payload
-                            );
-
-                            // حفظ التوكن
-                            localStorage.setItem(
-                                'token',
-                                token
-                            );
-
-                            // حفظ بيانات اليوزر بشكل مدمج لضمان وجود جميع الحقول
-                            const userObj = {
-                                ...(data.user || data.data?.user || {}),
-                                ...payload,
-                                roleType: payload.roleType || payload.role || data.user?.roleType || data.data?.user?.roleType
-                            };
-
-                            localStorage.setItem(
-                                'user',
-                                JSON.stringify(
-                                    userObj
+                        const payload =
+                            JSON.parse(
+                                atob(
+                                    token.split('.')[1]
                                 )
                             );
-                        } catch (err) {
-                            console.error("Error parsing token/payload:", err);
-                        }
-                    } else {
-                        console.error("Token not found in response:", data);
+
+                        console.log(
+                            'TOKEN PAYLOAD:',
+                            payload
+                        );
+
+                        // حفظ التوكن
+                        localStorage.setItem(
+                            'token',
+                            token
+                        );
+
+                        // حفظ بيانات اليوزر
+                        localStorage.setItem(
+                            'user',
+                            JSON.stringify(
+                                payload
+                            )
+                        );
                     }
 
                     if (response.ok) {
@@ -876,37 +860,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         }).then(() => {
                             // التحويل للوحة التحكم مباشرة حسب الصلاحية
                             let dashboardLink = 'index.html';
-                            let userRole = "";
-
-                            const storedUserStr = localStorage.getItem("user");
-                            if (storedUserStr) {
-                                try {
-                                    const u = JSON.parse(storedUserStr);
-                                    userRole = u.roleType || u.role || "";
-                                } catch (e) {}
-                            }
-
-                            if (!userRole && payload) {
-                                userRole = payload.roleType || payload.role || "";
-                            }
-
-                            userRole = userRole.toLowerCase().trim();
-                            console.log("Redirecting user with role:", userRole);
-
-                            switch (userRole) {
-                                case 'user':
-                                case 'donor':
-                                    dashboardLink = 'donor-dashboard.html';
-                                    break;
-                                case 'charity':
-                                    dashboardLink = 'charity-dashboard.html';
-                                    break;
-                                case 'admin':
-                                    dashboardLink = 'admin-dashboard.html';
-                                    break;
-                                default:
-                                    dashboardLink = 'index.html';
-                                    break;
+                            if (payload) {
+                                switch (payload.roleType?.toLowerCase()) {
+                                    case 'user':
+                                        dashboardLink = 'donor-dashboard.html';
+                                        break;
+                                    case 'charity':
+                                        dashboardLink = 'charity-dashboard.html';
+                                        break;
+                                    case 'admin':
+                                        dashboardLink = 'admin-dashboard.html';
+                                        break;
+                                }
                             }
                             window.location.href = dashboardLink;
                         });

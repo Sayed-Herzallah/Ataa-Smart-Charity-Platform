@@ -486,37 +486,61 @@ profileForm?.addEventListener(
 
     deleteBtn?.addEventListener(
         "click",
-        () => {
-            showConfirmCard("هل أنت متأكد من حذف الحساب؟", async () => {
-                try {
-                    const response = await fetch(
+        async () => {
+
+            const confirmDelete =
+                confirm(
+                    "هل أنت متأكد من حذف الحساب؟"
+                );
+
+            if (!confirmDelete) return;
+
+            try {
+
+                const response =
+                    await fetch(
                         `${BASE_URL}/users/account`,
                         {
                             method: "DELETE",
+
                             headers: {
-                                authorization: token
+                                authorization:
+                                    token
                             }
                         }
                     );
 
-                    const data = await response.json();
-                    console.log(data);
+                const data =
+                    await response.json();
 
-                    if (response.ok) {
-                        alert("تم حذف الحساب");
-                        localStorage.removeItem("token");
-                        localStorage.removeItem("user");
-                        window.location.href = "index.html";
-                    } else {
-                        alert(data.message || "فشل حذف الحساب");
-                    }
-                } catch (error) {
-                    console.log(error);
-                    alert("حدث خطأ أثناء محاولة الحذف");
+                console.log(data);
+
+                if (response.ok) {
+
+                    alert(
+                        "تم حذف الحساب"
+                    );
+
+                    localStorage.removeItem(
+                        "token"
+                    );
+
+                    localStorage.removeItem(
+                        "user"
+                    );
+
+                    window.location.href =
+                        "index.html";
+
+                } else {
+
+                    alert(
+                        data.message ||
+                        "فشل حذف الحساب"
+                    );
                 }
-            });
-        }
-    );
+
+            } catch (error) {
 
                 console.log(error);
 
