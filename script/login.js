@@ -813,17 +813,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     console.log(data);
 
-                    const token =
-                        data.tokens?.accessToken;
+                    const token = data.token || data.accessToken || data.tokens?.accessToken || data.data?.token;
+                    let payload = null;
 
                     if (token) {
-
-                        const payload =
-                            JSON.parse(
+                        try {
+                            payload = JSON.parse(
                                 atob(
                                     token.split('.')[1]
                                 )
                             );
+                        } catch (e) {
+                            console.error('Failed to decode token:', e);
+                        }
 
                         console.log(
                             'TOKEN PAYLOAD:',
@@ -836,11 +838,25 @@ document.addEventListener('DOMContentLoaded', () => {
                             token
                         );
 
+                        // استخلاص وتوحيد بيانات المستخدم
+                        let userObj = data.user || data.data?.user || data.data || {};
+                        
+                        // دمج الـ payload مع بيانات اليوزر لضمان وجود المعرف والبيانات الكاملة
+                        if (payload) {
+                            userObj = { ...payload, ...userObj };
+                        }
+
+                        // توحيد مسمى roleType
+                        const role = userObj.roleType || userObj.role || payload?.roleType || payload?.role;
+                        if (role) {
+                            userObj.roleType = role;
+                        }
+
                         // حفظ بيانات اليوزر
                         localStorage.setItem(
                             'user',
                             JSON.stringify(
-                                payload
+                                userObj
                             )
                         );
                     }
@@ -860,8 +876,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         }).then(() => {
                             // التحويل للوحة التحكم مباشرة حسب الصلاحية
                             let dashboardLink = 'index.html';
-                            if (payload) {
-                                switch (payload.roleType?.toLowerCase()) {
+                            const savedUser = JSON.parse(localStorage.getItem('user') || 'null');
+                            const role = savedUser?.roleType || savedUser?.role || payload?.roleType || payload?.role;
+                            
+                            if (role) {
+                                switch (role.toLowerCase()) {
                                     case 'user':
                                         dashboardLink = 'donor-dashboard.html';
                                         break;

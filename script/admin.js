@@ -1,767 +1,602 @@
+// admin.js — لوحة تحكم الأدمن | عطاء
 
-
-// function toggleSidebar() {
-//     const sidebar = document.getElementById("sidebar");
-//     const content = document.getElementById("content");
-//     const menuBtn = document.querySelector(".menu-btn");
-//     if(sidebar) sidebar.classList.toggle("active");
-//     if(content) content.classList.toggle("shift");
-//     if(menuBtn) menuBtn.classList.toggle("move");
-// }
-
-
-// function confirmDelete(btn, name) {
-//     if (confirm(`؟هل متاكد من حذف هذا السجل`)) {
-//         btn.closest('tr').remove();
-//     }
-// }
-
-// function setStatus(id, status) {
-//     console.log(`Status for ${id} set to ${status}`);
-// }
-
-// async function loadDashboardData() {
-//     try {
-        
-//         const resDonors = await fetch('https://reqres.in/api/users?page=1');
-//         const jsonDonors = await resDonors.json();
-//         const donorNames = [""];
-        
-//         document.getElementById('donors-table').innerHTML = jsonDonors.data.slice(0, 4).map((u, i) => `
-//             <tr>
-//                 <td style="font-weight: bold;">${donorNames[i]}</td>
-//                 <td>
-//                     <button class="btn btn-sm btn-success" onclick="setStatus(${u.id}, 'accept')">قبول</button>
-//                     <button class="btn btn-sm btn-secondary" onclick="setStatus(${u.id}, 'review')">مراجعة</button>
-//                     <button class="btn btn-sm btn-danger" onclick="confirmDelete(this, '${donorNames[i]}')">حذف</button>
-//                 </td>
-//             </tr>`).join('');
-
-//         const resCharities = await fetch('https://reqres.in/api/users?page=2');
-//         const jsonCharities = await resCharities.json();
-//         const charityNames = [""];
-
-//         document.getElementById('charities-table').innerHTML = jsonCharities.data.slice(0, 4).map((u, i) => `
-//             <tr>
-//                 <td style="font-weight: bold;">${charityNames[i]}</td>
-//                 <td>
-//                     <button class="btn btn-sm btn-success" onclick="setStatus(${u.id}, 'accept')">قبول</button>
-//                     <button class="btn btn-sm btn-secondary" onclick="setStatus(${u.id}, 'review')">مراجعة</button>
-//                     <button class="btn btn-sm btn-danger" onclick="confirmDelete(this, '${charityNames[i]}')">حذف</button>
-//                 </td>
-//             </tr>`).join('');
-//     } catch (e) { console.error(e); }
-// }
-
-// function initCharts() {
-//     const ctx = document.getElementById('donutChart');
-//     if (ctx) {
-//         new Chart(ctx, {
-//             type: 'doughnut',
-//             data: {
-//                 labels: ['ملابس رجال', 'ملابس نساء', 'ملابس اطفال'],
-//                 datasets: [{ data: [45, 25, 30], backgroundColor: ['#007bff', '#28a745', '#ffc107'] }]
-//             },
-//             options: { responsive: true, maintainAspectRatio: false }
-//         });
-//     }
-//     const ctx2 = document.getElementById('lineChart');
-//     if (ctx2) {
-//         new Chart(ctx2, {
-//             type: 'line',
-//             data: {
-//                 labels: ['يناير', 'فبراير', 'مارس', 'أبريل'],
-//                 datasets: [{ label: 'تبرعات', data: [10, 50, 25, 70], borderColor: '#6f42c1', fill: false }]
-//             },
-//             options: { responsive: true, maintainAspectRatio: false }
-//         });
-//     }
-// }
-
-// function addNewTask() {
-//     const taskName = prompt("أدخل تفاصيل المهمة الجديدة:");
-//     if (taskName && taskName.trim() !== "") {
-//         const list = document.getElementById('list');
-//         const li = document.createElement('li');
-//         li.className = "list-group-item";
-//         li.innerHTML = `<input type="checkbox"> <label>${taskName}</label>`;
-//         list.appendChild(li);
-//     }
-// }
-
-// document.addEventListener('DOMContentLoaded', () => {
-//     initCharts();
-//     loadDashboardData();
-//     document.getElementById('addtask').onclick = addNewTask;
-// });
-
-// =========================2222222222222222222222222222222222222=======================
-// فحص الأمان والصلاحيات فوراً قبل تحميل الصفحة
+// ═══ 1. فحص الأمان ═══
 (function checkSecurity() {
     const localToken = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
     let user = null;
-    try {
-        user = JSON.parse(userStr);
-    } catch (e) {}
+    try { user = JSON.parse(userStr); } catch (e) {}
 
     if (!localToken || !user || user.roleType?.toLowerCase() !== "admin") {
-        alert("غير مصرح لك بالدخول لهذه الصفحة!");
         window.location.href = "login-register.html?mode=login";
         throw new Error("Unauthorized access");
     }
 })();
 
 const BASE_URL = "https://ataa-charity-platform.vercel.app";
-
 const token = localStorage.getItem("token");
 
-/* =========================
-   SIDEBAR
-========================= */
-
-function toggleSidebar() {
-
-    const sidebar = document.getElementById("sidebar");
-    const content = document.getElementById("content");
-    const menuBtn = document.querySelector(".menu-btn");
-
-    sidebar?.classList.toggle("active");
-    content?.classList.toggle("shift");
-    menuBtn?.classList.toggle("move");
-}
-
-/* =========================
-   DELETE USER
-========================= */
-
-async function deleteUser(id, btn) {
-
-    const confirmDelete = confirm("هل أنت متأكد من حذف المستخدم؟");
-
-    if (!confirmDelete) return;
-
-    try {
-
-        const response = await fetch(
-            `${BASE_URL}/users/${id}`,
-            {
-                method: "DELETE",
-
-                headers: {
-                    Authorization: token
-                }
-            }
-        );
-
-        if (response.ok) {
-
-            btn.closest("tr").remove();
-
-        } else {
-
-            alert("فشل حذف المستخدم");
-        }
-
-    } catch (error) {
-
-        console.log(error);
-
-        alert("حدث خطأ أثناء الحذف");
-    }
-}
-
-/* =========================
-   DELETE CHARITY
-========================= */
-
-async function deleteCharity(id, btn) {
-
-    const confirmDelete = confirm("هل أنت متأكد من حذف الجمعية؟");
-
-    if (!confirmDelete) return;
-
-    try {
-
-        const response = await fetch(
-            `${BASE_URL}/charity/${id}`,
-            {
-                method: "DELETE",
-
-                headers: {
-                    Authorization: token
-                }
-            }
-        );
-
-        if (response.ok) {
-
-            btn.closest("tr").remove();
-
-        } else {
-
-            alert("فشل حذف الجمعية");
-        }
-
-    } catch (error) {
-
-        console.log(error);
-
-        alert("حدث خطأ أثناء الحذف");
-    }
-}
-
-/* =========================
-   APPROVE CHARITY
-========================= */
-async function approveCharity(id) {
-
-    console.log("TOKEN:", localStorage.getItem("token"));
-
-    try {
-
-        const response = await fetch(
-            `${BASE_URL}/charity/${id}/approve`,
-            {
-                method: "PATCH",
-
-                headers: {
-                    Authorization: localStorage.getItem("token")
-                }
-            }
-        );
-
-        const data = await response.json();
-        console.log(data);
-
-        if (response.ok) {
-
-            alert("تم قبول الجمعية");
-            loadCharities();
-
-        } else {
-
-            alert(data.message || "فشل قبول الجمعية");
-        }
-
-    } catch (error) {
-
-        console.log(error);
-    }
-}
-
-/* =========================
-   REJECT CHARITY
-========================= */
-
-async function rejectCharity(id) {
-
-    const reason = prompt("اكتب سبب الرفض");
-
-    if (!reason) return;
-
-    try {
-
-        const response = await fetch(
-            `${BASE_URL}/charity/${id}/reject`,
-            {
-                method: "PATCH",
-
-                headers: {
-                    Authorization: localStorage.getItem("token"),
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    reason
-                })
-            }
-        );
-
-        const data = await response.json();
-        console.log(data);
-
-        if (response.ok) {
-
-            alert("تم رفض الجمعية");
-            loadCharities();
-
-        } else {
-
-            alert(data.message || "فشل رفض الجمعية");
-        }
-
-    } catch (error) {
-
-        console.log(error);
-    }
-}
-
-/* =========================
-   LOAD USERS
-========================= */
-
-async function loadUsers() {
-
-    try {
-
-        const response = await fetch(
-            `${BASE_URL}/users`,
-            {
-                headers: {
-                    Authorization: token
-                }
-            }
-        );
-
-        const data = await response.json();
-
-        console.log("USERS:", data);
-
-        const users = data.data?.Data || [];
-
-        const donorsTable =
-            document.getElementById("donors-table");
-
-        if (!donorsTable) return;
-
-        donorsTable.innerHTML =
-            users.map(user => `
-
-                <tr>
-
-                    <td>
-                        ${user.userName || user.name || user.email || "مستخدم"}
-                    </td>
-
-                    <td>
-
-                        <button
-                            class="btn btn-danger btn-sm"
-                            onclick="deleteUser('${user._id}', this)"
-                        >
-                            حذف
-                        </button>
-
-                    </td>
-
-                </tr>
-
-            `).join("");
-
-    } catch (error) {
-
-        console.log("USERS ERROR:", error);
-    }
-}
-/* =========================
-   LOAD CHARITIES
-========================= */
-
-async function loadCharities() {
-
-    try {
-
-        const response = await fetch(
-            `${BASE_URL}/charity/charities`
-        );
-
-        const data = await response.json();
-
-        console.log("CHARITIES:", data);
-       
-        const charities = data.result?.Data || [];
-
-        const pendingCharities =
-            charities.filter(
-                charity => charity.approvalStatus === "pending"
-            );
-
-        const approvedCharities =
-            charities.filter(
-                charity => charity.approvalStatus === "approved"
-            );
-            console.log("Pending:", pendingCharities);
-            console.log("Approved:", approvedCharities);
-
-        const pendingTable =
-            document.getElementById(
-                "pending-charities-table"
-            );
-
-        const approvedTable =
-            document.getElementById(
-                "approved-charities-table"
-            );
-
-        if (pendingTable) {
-
-            pendingTable.innerHTML =
-                pendingCharities.map(charity => `
-
-                    <tr>
-
-                        <td>
-                            ${charity.charityName}
-                        </td>
-
-                        <td>
-                            قيد المراجعة
-                        </td>
-
-                        <td>
-
-                            <button
-                                class="btn btn-success btn-sm"
-                                onclick="approveCharity('${charity._id}')"
-                            >
-                                قبول
-                            </button>
-
-                            <button
-                                class="btn btn-secondary btn-sm"
-                                onclick="rejectCharity('${charity._id}')"
-                            >
-                                رفض
-                            </button>
-
-                            <button
-                                class="btn btn-danger btn-sm"
-                                onclick="deleteCharity('${charity._id}', this)"
-                            >
-                                حذف
-                            </button>
-
-                        </td>
-
-                    </tr>
-
-                `).join("");
-        }
-
-        if (approvedTable) {
-
-            approvedTable.innerHTML =
-                approvedCharities.map(charity => `
-
-                    <tr>
-
-                        <td>
-                            ${charity.charityName}
-                        </td>
-
-                        <td>
-                            معتمدة
-                        </td>
-
-                        <td>
-
-                            <button
-                                class="btn btn-danger btn-sm"
-                                onclick="deleteCharity('${charity._id}', this)"
-                            >
-                                حذف
-                            </button>
-
-                        </td>
-
-                    </tr>
-
-                `).join("");
-        }
-
-    } catch (error) {
-
-        console.log(error);
-    }
-}
-/* =========================
-   CHARTS
-========================= */
-
-function initCharts() {
-
-    const ctx = document.getElementById('donutChart');
-
-    if (ctx) {
-
-        new Chart(ctx, {
-
-            type: 'doughnut',
-
-            data: {
-
-                labels: [
-                    'ملابس رجال',
-                    'ملابس نساء',
-                    'ملابس أطفال'
-                ],
-
-                datasets: [{
-                    data: [45, 25, 30],
-
-                    backgroundColor: [
-                        '#007bff',
-                        '#28a745',
-                        '#ffc107'
-                    ]
-                }]
-            },
-
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
-    }
-
-    const ctx2 = document.getElementById('lineChart');
-
-    if (ctx2) {
-
-        new Chart(ctx2, {
-
-            type: 'line',
-
-            data: {
-
-                labels: [
-                    'يناير',
-                    'فبراير',
-                    'مارس',
-                    'أبريل'
-                ],
-
-                datasets: [{
-                    label: 'تبرعات',
-
-                    data: [10, 50, 25, 70],
-
-                    borderColor: '#6f42c1',
-
-                    fill: false
-                }]
-            },
-
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
-    }
-}
-
-/* =========================
-   TASKS
-========================= */
-
-function addNewTask() {
-
-    const taskName =
-        prompt("أدخل تفاصيل المهمة الجديدة:");
-
-    if (!taskName || taskName.trim() === "") return;
-
-    const list =
-        document.getElementById('list');
-
-    const li =
-        document.createElement('li');
-
-    li.className = "list-group-item";
-
-    li.innerHTML = `
-        <input type="checkbox">
-        <label>${taskName}</label>
+// ═══ 2. Cache & Pagination State ═══
+let allDonors = [];
+let allPendingCharities = [];
+let allApprovedCharities = [];
+
+let donorsPage = 1;
+let pendingPage = 1;
+let approvedPage = 1;
+const PAGE_SIZE = 5;
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TOAST SYSTEM
+   ══════════════════════════════════════════════════════════════════════════ */
+
+// Create toast container once
+const toastContainer = document.createElement('div');
+toastContainer.className = 'toast-container';
+document.body.appendChild(toastContainer);
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast-item ${type}`;
+
+    const icons = {
+        success: '<i class="fa-solid fa-circle-check"></i>',
+        error:   '<i class="fa-solid fa-circle-xmark"></i>',
+        warning: '<i class="fa-solid fa-circle-exclamation"></i>'
+    };
+
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || icons.success}</div>
+        <div class="toast-msg">${message}</div>
     `;
 
-    list.appendChild(li);
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   CUSTOM CONFIRM & PROMPT DIALOGS
+   ══════════════════════════════════════════════════════════════════════════ */
 
-// ====================
-/* =========================
-   LOAD NOTIFICATIONS
-========================= */
+function showConfirmCard(title, message, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-overlay';
 
-async function loadNotifications() {
+    overlay.innerHTML = `
+        <div class="custom-dialog">
+            <div class="dialog-icon confirm"><i class="fa-solid fa-trash-can"></i></div>
+            <div class="dialog-title">${title}</div>
+            <div class="dialog-message">${message}</div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn danger" id="cfmYes">تأكيد</button>
+                <button class="dialog-btn cancel" id="cfmNo">إلغاء</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.classList.add('active'), 10);
+
+    const close = () => {
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.remove(), 300);
+    };
+
+    overlay.querySelector('#cfmNo').onclick = close;
+    overlay.querySelector('#cfmYes').onclick = () => { close(); onConfirm(); };
+}
+
+function showPromptCard(title, message, placeholder, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-overlay';
+
+    overlay.innerHTML = `
+        <div class="custom-dialog">
+            <div class="dialog-icon prompt"><i class="fa-solid fa-comment-dots"></i></div>
+            <div class="dialog-title">${title}</div>
+            <div class="dialog-message">${message}</div>
+            <textarea class="dialog-input" id="pInput" rows="3" placeholder="${placeholder}"></textarea>
+            <div class="dialog-buttons">
+                <button class="dialog-btn primary" id="pSubmit">إرسال</button>
+                <button class="dialog-btn cancel" id="pCancel">إلغاء</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.classList.add('active'), 10);
+
+    const close = () => {
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.remove(), 300);
+    };
+
+    overlay.querySelector('#pCancel').onclick = close;
+    overlay.querySelector('#pSubmit').onclick = () => {
+        const val = overlay.querySelector('#pInput').value.trim();
+        if (!val) { showToast("يرجى إدخال السبب أولاً!", "warning"); return; }
+        close();
+        onConfirm(val);
+    };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   API OPERATIONS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+async function deleteUser(id) {
+    showConfirmCard(
+        "حذف المستخدم",
+        "هل أنت متأكد من رغبتك في حذف هذا المتبرع نهائياً من النظام؟",
+        async () => {
+            try {
+                const res = await fetch(`${BASE_URL}/users/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: token }
+                });
+                if (res.ok) {
+                    showToast("تم حذف المتبرع بنجاح ✓", "success");
+                    loadUsers();
+                } else {
+                    const err = await res.json();
+                    showToast(err.message || "فشل حذف المتبرع", "error");
+                }
+            } catch (e) { console.error(e); showToast("حدث خطأ أثناء الحذف", "error"); }
+        }
+    );
+}
+
+async function deleteCharity(id) {
+    showConfirmCard(
+        "حذف الجمعية",
+        "هل أنت متأكد من رغبتك في حذف هذه الجمعية نهائياً من النظام؟",
+        async () => {
+            try {
+                const res = await fetch(`${BASE_URL}/charity/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: token }
+                });
+                if (res.ok) {
+                    showToast("تم حذف الجمعية بنجاح ✓", "success");
+                    loadCharities();
+                } else {
+                    const err = await res.json();
+                    showToast(err.message || "فشل حذف الجمعية", "error");
+                }
+            } catch (e) { console.error(e); showToast("حدث خطأ أثناء الحذف", "error"); }
+        }
+    );
+}
+
+async function approveCharity(id) {
+    showConfirmCard(
+        "اعتماد الجمعية",
+        "هل تريد تأكيد قبول واعتماد هذه الجمعية الخيرية بالمنصة؟",
+        async () => {
+            try {
+                const res = await fetch(`${BASE_URL}/charity/${id}/approve`, {
+                    method: "PATCH",
+                    headers: { Authorization: token }
+                });
+                if (res.ok) {
+                    showToast("تم اعتماد وقبول الجمعية بنجاح ✓", "success");
+                    loadCharities();
+                } else {
+                    const err = await res.json();
+                    showToast(err.message || "فشل قبول الجمعية", "error");
+                }
+            } catch (e) { console.error(e); showToast("حدث خطأ أثناء قبول الجمعية", "error"); }
+        }
+    );
+}
+
+async function rejectCharity(id) {
+    showPromptCard(
+        "رفض الجمعية",
+        "يرجى توضيح سبب رفض طلب اعتماد هذه الجمعية:",
+        "اكتب سبب الرفض هنا...",
+        async (reason) => {
+            try {
+                const res = await fetch(`${BASE_URL}/charity/${id}/reject`, {
+                    method: "PATCH",
+                    headers: {
+                        Authorization: token,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ reason })
+                });
+                if (res.ok) {
+                    showToast("تم رفض طلب الجمعية وإخطارهم بالسبب ✓", "success");
+                    loadCharities();
+                } else {
+                    const err = await res.json();
+                    showToast(err.message || "فشل رفض طلب الجمعية", "error");
+                }
+            } catch (e) { console.error(e); showToast("حدث خطأ أثناء عملية الرفض", "error"); }
+        }
+    );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TABLE RENDERING — with all data columns
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function renderDonorsTable() {
+    const tbody = document.getElementById("donors-table");
+    const pagDiv = document.getElementById("donors-pagination");
+    if (!tbody) return;
+
+    if (allDonors.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><i class="fa-solid fa-users"></i><p>لا يوجد متبرعين حالياً</p></td></tr>`;
+        if (pagDiv) pagDiv.innerHTML = '';
+        return;
+    }
+
+    const totalPages = Math.ceil(allDonors.length / PAGE_SIZE);
+    if (donorsPage > totalPages) donorsPage = totalPages || 1;
+
+    const start = (donorsPage - 1) * PAGE_SIZE;
+    const pageItems = allDonors.slice(start, start + PAGE_SIZE);
+
+    tbody.innerHTML = pageItems.map(u => `
+        <tr>
+            <td class="fw-semibold">${u.userName || u.name || '—'}</td>
+            <td>${u.email || '—'}</td>
+            <td>${u.phone || '—'}</td>
+            <td>${u.address || '—'}</td>
+            <td>
+                <div class="actions-group">
+                    <button class="btn-view" onclick="viewDetails('${u._id}','donor')">
+                        <i class="fa-solid fa-eye me-1"></i>التفاصيل
+                    </button>
+                    <button class="btn-delete" onclick="deleteUser('${u._id}')">
+                        <i class="fa-solid fa-trash-can me-1"></i>حذف
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join("");
+
+    renderPagination(pagDiv, donorsPage, totalPages, p => { donorsPage = p; renderDonorsTable(); });
+}
+
+function renderPendingTable() {
+    const tbody = document.getElementById("pending-charities-table");
+    const pagDiv = document.getElementById("pending-pagination");
+    if (!tbody) return;
+
+    if (allPendingCharities.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><i class="fa-solid fa-hourglass-half"></i><p>لا توجد طلبات معلقة حالياً</p></td></tr>`;
+        if (pagDiv) pagDiv.innerHTML = '';
+        return;
+    }
+
+    const totalPages = Math.ceil(allPendingCharities.length / PAGE_SIZE);
+    if (pendingPage > totalPages) pendingPage = totalPages || 1;
+
+    const start = (pendingPage - 1) * PAGE_SIZE;
+    const pageItems = allPendingCharities.slice(start, start + PAGE_SIZE);
+
+    tbody.innerHTML = pageItems.map(c => `
+        <tr>
+            <td class="fw-semibold">${c.charityName || '—'}</td>
+            <td>${c.email || '—'}</td>
+            <td>${c.licenseNumber || '—'}</td>
+            <td>${c.phone || '—'}</td>
+            <td><span class="badge-status badge-pending"><i class="fa-solid fa-clock me-1"></i>قيد المراجعة</span></td>
+            <td>
+                <div class="actions-group">
+                    <button class="btn-view" onclick="viewDetails('${c._id}','charity')">
+                        <i class="fa-solid fa-eye me-1"></i>التفاصيل
+                    </button>
+                    <button class="btn-approve" onclick="approveCharity('${c._id}')">
+                        <i class="fa-solid fa-check me-1"></i>قبول
+                    </button>
+                    <button class="btn-reject" onclick="rejectCharity('${c._id}')">
+                        <i class="fa-solid fa-xmark me-1"></i>رفض
+                    </button>
+                    <button class="btn-delete" onclick="deleteCharity('${c._id}')">
+                        <i class="fa-solid fa-trash-can me-1"></i>حذف
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join("");
+
+    renderPagination(pagDiv, pendingPage, totalPages, p => { pendingPage = p; renderPendingTable(); });
+}
+
+function renderApprovedTable() {
+    const tbody = document.getElementById("approved-charities-table");
+    const pagDiv = document.getElementById("approved-pagination");
+    if (!tbody) return;
+
+    if (allApprovedCharities.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><i class="fa-solid fa-circle-check"></i><p>لا توجد جمعيات معتمدة حالياً</p></td></tr>`;
+        if (pagDiv) pagDiv.innerHTML = '';
+        return;
+    }
+
+    const totalPages = Math.ceil(allApprovedCharities.length / PAGE_SIZE);
+    if (approvedPage > totalPages) approvedPage = totalPages || 1;
+
+    const start = (approvedPage - 1) * PAGE_SIZE;
+    const pageItems = allApprovedCharities.slice(start, start + PAGE_SIZE);
+
+    tbody.innerHTML = pageItems.map(c => `
+        <tr>
+            <td class="fw-semibold">${c.charityName || '—'}</td>
+            <td>${c.email || '—'}</td>
+            <td>${c.licenseNumber || '—'}</td>
+            <td>${c.phone || '—'}</td>
+            <td><span class="badge-status badge-approved"><i class="fa-solid fa-circle-check me-1"></i>معتمدة</span></td>
+            <td>
+                <div class="actions-group">
+                    <button class="btn-view" onclick="viewDetails('${c._id}','charity')">
+                        <i class="fa-solid fa-eye me-1"></i>التفاصيل
+                    </button>
+                    <button class="btn-delete" onclick="deleteCharity('${c._id}')">
+                        <i class="fa-solid fa-trash-can me-1"></i>حذف
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join("");
+
+    renderPagination(pagDiv, approvedPage, totalPages, p => { approvedPage = p; renderApprovedTable(); });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PAGINATION
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function renderPagination(container, currentPage, totalPages, onPageChange) {
+    if (!container) return;
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+    container.innerHTML = `
+        <button class="btn btn-outline-teal btn-sm" ${currentPage === 1 ? 'disabled' : ''} id="pgPrev">
+            السابق <i class="fa-solid fa-chevron-right ms-1"></i>
+        </button>
+        <span class="fw-bold" style="font-size:13px;color:#1b4b5a;">صفحة ${currentPage} من ${totalPages}</span>
+        <button class="btn btn-outline-teal btn-sm" ${currentPage === totalPages ? 'disabled' : ''} id="pgNext">
+            التالي <i class="fa-solid fa-chevron-left me-1"></i>
+        </button>
+    `;
+
+    container.querySelector('#pgPrev').onclick = () => onPageChange(currentPage - 1);
+    container.querySelector('#pgNext').onclick = () => onPageChange(currentPage + 1);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DETAILS MODAL
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function viewDetails(id, type) {
+    let item = null;
+    if (type === 'donor') {
+        item = allDonors.find(u => u._id === id);
+    } else {
+        item = allPendingCharities.find(c => c._id === id) || allApprovedCharities.find(c => c._id === id);
+    }
+
+    if (!item) {
+        showToast("تعذر العثور على التفاصيل المطلوبة", "error");
+        return;
+    }
+
+    const body = document.getElementById("detailsModalBody");
+    if (!body) return;
+
+    const addRow = (label, value) => {
+        if (!value) return '';
+        return `<div class="detail-row">
+            <span class="detail-label">${label}</span>
+            <span class="detail-value">${value}</span>
+        </div>`;
+    };
+
+    let html = '';
+    if (type === 'donor') {
+        html += addRow("اسم المستخدم", item.userName);
+        html += addRow("الاسم", item.name);
+        html += addRow("البريد الإلكتروني", item.email);
+        html += addRow("رقم الهاتف", item.phone);
+        html += addRow("العنوان", item.address);
+        html += addRow("نوع الحساب", "متبرع (مستخدم)");
+        html += addRow("تاريخ الانضمام", item.createdAt ? new Date(item.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }) : '');
+    } else {
+        html += addRow("اسم الجمعية", item.charityName);
+        html += addRow("البريد الإلكتروني", item.email);
+        html += addRow("رقم الهاتف", item.phone);
+        html += addRow("العنوان", item.address);
+        html += addRow("رقم الترخيص", item.licenseNumber);
+        html += addRow("وصف الجمعية", item.description || item.charityDescription);
+        const statusBadge = item.approvalStatus === 'approved'
+            ? '<span class="badge-status badge-approved"><i class="fa-solid fa-circle-check me-1"></i>معتمدة</span>'
+            : '<span class="badge-status badge-pending"><i class="fa-solid fa-clock me-1"></i>قيد المراجعة</span>';
+        html += addRow("حالة الاعتماد", statusBadge);
+        html += addRow("تاريخ التسجيل", item.createdAt ? new Date(item.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }) : '');
+    }
+
+    body.innerHTML = html || '<p class="text-center text-muted">لا توجد بيانات</p>';
+
+    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    modal.show();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DATA LOADING
+   ══════════════════════════════════════════════════════════════════════════ */
+
+async function loadUsers() {
+    const tbody = document.getElementById("donors-table");
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="loading-spinner"></td></tr>`;
 
     try {
+        // Fetch ALL users by requesting a high limit and looping through pages
+        let allUsers = [];
+        let page = 1;
+        let totalPages = 1;
 
-        const response = await fetch(
-            `${BASE_URL}/notification`,
-            {
-                headers: {
-                    Authorization: token
-                }
-            }
-        );
+        do {
+            const res = await fetch(`${BASE_URL}/users?page=${page}&limit=500`, {
+                headers: { Authorization: token }
+            });
+            const data = await res.json();
 
-        const data = await response.json();
+            // The users API returns: { data: { Data: [...], Total_Pages, Total_Items } }
+            const result = data.data || data;
+            const items = result.Data || result.users || [];
+            totalPages = result.Total_Pages || 1;
 
-        console.log("NOTIFICATIONS:", data);
+            allUsers = allUsers.concat(items);
+            console.log(`📄 Users page ${page}/${totalPages}: got ${items.length} items`);
+            page++;
+        } while (page <= totalPages);
 
-        const notifications =
-            data.notifications ||
-            data.data ||
-            [];
+        // Filter out admin users — only show donors
+        allDonors = allUsers.filter(u => u.roleType?.toLowerCase() !== 'admin');
 
-        const countBadge =
-            document.getElementById("notifications-list");
+        console.log(`✅ Total donors loaded: ${allDonors.length}`);
+        donorsPage = 1;
+        renderDonorsTable();
+        updateStats();
+    } catch (e) {
+        console.error("USERS ERROR:", e);
+        showToast("فشل تحميل بيانات المتبرعين من السيرفر", "error");
+        if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">فشل تحميل البيانات</td></tr>`;
+    }
+}
 
-        const notificationList =
-            document.getElementById("notification-list");
+async function loadCharities() {
+    const pendTb = document.getElementById("pending-charities-table");
+    const appTb = document.getElementById("approved-charities-table");
+    if (pendTb) pendTb.innerHTML = `<tr><td colspan="6" class="loading-spinner"></td></tr>`;
+    if (appTb) appTb.innerHTML = `<tr><td colspan="6" class="loading-spinner"></td></tr>`;
 
-        if (countBadge) {
+    try {
+        // Fetch ALL charities by requesting a high limit and looping through pages
+        let allCharities = [];
+        let page = 1;
+        let totalPages = 1;
 
-            countBadge.textContent =
-                notifications.length;
-        }
+        do {
+            const res = await fetch(`${BASE_URL}/charity/charities?page=${page}&limit=500`);
+            const data = await res.json();
 
-        if (!notificationList) return;
+            // The charities API returns: { result: { Data: [...], Total_Pages, Total_Items } }
+            const result = data.result || data;
+            const items = result.Data || [];
+            totalPages = result.Total_Pages || 1;
+
+            allCharities = allCharities.concat(items);
+            console.log(`📄 Charities page ${page}/${totalPages}: got ${items.length} items`);
+            page++;
+        } while (page <= totalPages);
+
+        allPendingCharities = allCharities.filter(c => c.approvalStatus === "pending");
+        allApprovedCharities = allCharities.filter(c => c.approvalStatus === "approved");
+
+        console.log(`✅ Total charities: ${allCharities.length} (${allPendingCharities.length} pending + ${allApprovedCharities.length} approved)`);
+        pendingPage = 1;
+        approvedPage = 1;
+        renderPendingTable();
+        renderApprovedTable();
+        updateStats();
+    } catch (e) {
+        console.error("CHARITIES ERROR:", e);
+        showToast("فشل تحميل بيانات الجمعيات من السيرفر", "error");
+        if (pendTb) pendTb.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">فشل تحميل البيانات</td></tr>`;
+        if (appTb) appTb.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">فشل تحميل البيانات</td></tr>`;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   STATS UPDATE
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function updateStats() {
+    const el = (id) => document.getElementById(id);
+
+    const donorsEl = el("total-donors");
+    const pendingEl = el("total-pending");
+    const approvedEl = el("total-approved");
+
+    if (donorsEl) donorsEl.textContent = allDonors.length;
+    if (pendingEl) pendingEl.textContent = allPendingCharities.length;
+    if (approvedEl) approvedEl.textContent = allApprovedCharities.length;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   NOTIFICATIONS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+async function loadNotifications() {
+    try {
+        const res = await fetch(`${BASE_URL}/notification`, {
+            headers: { Authorization: token }
+        });
+        const data = await res.json();
+        const notifications = data.notifications || data.data || [];
+
+        const countBadge = document.getElementById("notifications-count");
+        const list = document.getElementById("notification-list");
+
+        if (countBadge) countBadge.textContent = notifications.length;
+
+        if (!list) return;
 
         if (!notifications.length) {
-
-            notificationList.innerHTML = `
-                <li class="dropdown-item text-center">
-                    لا توجد إشعارات
-                </li>
-            `;
-
+            list.innerHTML = `<li class="dropdown-item text-center text-muted py-3">لا توجد إشعارات</li>`;
             return;
         }
 
-        notificationList.innerHTML =
-            notifications.map(notification => `
-
-                <li
-                    class="dropdown-item d-flex justify-content-between align-items-center"
-                >
-
-                    <span>
-                        ${
-                            notification.message ||
-                            notification.title ||
-                            "إشعار جديد"
-                        }
-                    </span>
-
-                    <div>
-
-                        <button
-                            class="btn btn-sm btn-success"
-                            onclick="markNotificationAsRead('${notification._id}')"
-                        >
-                            ✓
-                        </button>
-
-                        <button
-                            class="btn btn-sm btn-danger"
-                            onclick="deleteNotification('${notification._id}')"
-                        >
-                            ✕
-                        </button>
-
-                    </div>
-
-                </li>
-
-            `).join("");
-
-    } catch (error) {
-
-        console.log("NOTIFICATIONS ERROR:", error);
+        list.innerHTML = notifications.map(n => `
+            <li class="dropdown-item d-flex justify-content-between align-items-center gap-2" style="border-bottom:1px solid #f3f4f6;padding:10px 12px;">
+                <span style="font-size:13px;color:#475569;">${n.message || n.title || "إشعار جديد"}</span>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-success p-1" onclick="markNotificationRead('${n._id}')" style="font-size:10px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:6px;">✓</button>
+                    <button class="btn btn-sm btn-danger p-1" onclick="deleteNotification('${n._id}')" style="font-size:10px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:6px;">✕</button>
+                </div>
+            </li>
+        `).join("");
+    } catch (e) {
+        console.error("NOTIFICATIONS ERROR:", e);
     }
 }
 
-/* =========================
-   MARK AS READ
-========================= */
-
-async function markNotificationAsRead(id) {
-
+async function markNotificationRead(id) {
     try {
-
-        const response = await fetch(
-            `${BASE_URL}/notification/${id}`,
-            {
-                method: "PATCH",
-
-                headers: {
-                    Authorization: token,
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    status: "read"
-                })
-            }
-        );
-
-        const data = await response.json();
-
-        console.log(data);
-
-        if (response.ok) {
-
-            loadNotifications();
-        }
-
-    } catch (error) {
-
-        console.log(error);
-    }
+        const res = await fetch(`${BASE_URL}/notification/${id}`, {
+            method: "PATCH",
+            headers: { Authorization: token, "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "read" })
+        });
+        if (res.ok) loadNotifications();
+    } catch (e) { console.error(e); }
 }
-
-/* =========================
-   DELETE NOTIFICATION
-========================= */
 
 async function deleteNotification(id) {
-
     try {
-
-        const response = await fetch(
-            `${BASE_URL}/notification/${id}`,
-            {
-                method: "DELETE",
-
-                headers: {
-                    Authorization: token
-                }
-            }
-        );
-
-        const data = await response.json();
-
-        console.log(data);
-
-        if (response.ok) {
-
-            loadNotifications();
-        }
-
-    } catch (error) {
-
-        console.log(error);
-    }
+        const res = await fetch(`${BASE_URL}/notification/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: token }
+        });
+        if (res.ok) loadNotifications();
+    } catch (e) { console.error(e); }
 }
 
-/* =========================
-
+/* ══════════════════════════════════════════════════════════════════════════
    INIT
-========================= */
+   ══════════════════════════════════════════════════════════════════════════ */
 
 document.addEventListener("DOMContentLoaded", () => {
-
-    initCharts();
-
     loadUsers();
-
     loadCharities();
-
     loadNotifications();
-
-    document.getElementById("addtask").onclick =
-        addNewTask;
 });
